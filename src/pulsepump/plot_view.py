@@ -15,8 +15,8 @@ class PlotView(pg.PlotWidget):
         self.setBackground("w")
         self.showGrid(x=True, y=True, alpha=0.3)
         self.setLabel("bottom", "t", units="s")
-        self.setLabel("left", "Pressure", units=pressure.P_UNITS)
-        self.addLegend()
+        self.setLabel("left", "Pressure", units=pressure.units())
+        self.legend = self.addLegend()
 
         self.n = buffer_size
         self.t = np.zeros(self.n, dtype=np.float64)
@@ -25,8 +25,8 @@ class PlotView(pg.PlotWidget):
         self.idx = 0
         self.filled = 0
 
-        self.curve0 = self.plot(pen=pg.mkPen("#1f77b4", width=2), name="P0 (GP26)")
-        self.curve1 = self.plot(pen=pg.mkPen("#d62728", width=2), name="P1 (GP27)")
+        self.curve0 = self.plot(pen=pg.mkPen("#1f77b4", width=2), name="P1 (GP26)")
+        self.curve1 = self.plot(pen=pg.mkPen("#d62728", width=2), name="P2 (GP27)")
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.redraw)
@@ -56,3 +56,15 @@ class PlotView(pg.PlotWidget):
             v1 = self.v1[order]
         self.curve0.setData(t, pressure.counts_to_pressure_arr(v0))
         self.curve1.setData(t, pressure.counts_to_pressure_arr(v1))
+
+    def refresh_units(self) -> None:
+        """Re-pull the units string from pressure config and update the y-axis label."""
+        self.setLabel("left", "Pressure", units=pressure.units())
+
+    def set_channel_pin(self, channel: int, gp: int) -> None:
+        """Update the legend label for a channel (1 or 2) to reflect its GP pin."""
+        curve = self.curve0 if channel == 1 else self.curve1
+        name = f"P{channel} (GP{gp})"
+        self.legend.removeItem(curve)
+        curve.opts["name"] = name
+        self.legend.addItem(curve, name)

@@ -46,12 +46,28 @@ class PicoLoader:
         cmd = [str(mpremote_bin), "connect", self.port, "run", str(firmware)]
         self.proc = subprocess.Popen(
             cmd,
+            stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=None,
             text=True,
             bufsize=1,
         )
         return self.proc
+
+    def _send(self, command: str) -> None:
+        if self.proc is None or self.proc.stdin is None:
+            return
+        try:
+            self.proc.stdin.write(f"{command}\n")
+            self.proc.stdin.flush()
+        except BrokenPipeError:
+            pass
+
+    def set_sample_rate(self, hz: int) -> None:
+        self._send(f"RATE={hz}")
+
+    def set_pin(self, channel: int, gp: int) -> None:
+        self._send(f"PIN{channel}={gp}")
 
     def stop(self) -> None:
         if self.proc is None:

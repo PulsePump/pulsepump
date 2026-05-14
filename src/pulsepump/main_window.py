@@ -42,10 +42,16 @@ class MainWindow(QMainWindow):
         self._docks: dict[str, QDockWidget] = {}
 
         self._add_dock(FunctionGeneratorPanel(), Qt.DockWidgetArea.LeftDockWidgetArea)
-        sampling_dock = self._add_dock(SamplingPanel(), Qt.DockWidgetArea.RightDockWidgetArea)
-        pressure_dock = self._add_dock(
-            PressureSensorsPanel(), Qt.DockWidgetArea.RightDockWidgetArea
-        )
+        self.sampling = SamplingPanel()
+        self.sampling.sampleRateChanged.connect(self.loader.set_sample_rate)
+        self.sampling.pinChanged.connect(self.loader.set_pin)
+        self.sampling.pinChanged.connect(self.plot.set_channel_pin)
+        self.plot.set_channel_pin(1, self.sampling.current_pin(1))
+        self.plot.set_channel_pin(2, self.sampling.current_pin(2))
+        sampling_dock = self._add_dock(self.sampling, Qt.DockWidgetArea.RightDockWidgetArea)
+        self.pressure_sensors = PressureSensorsPanel()
+        self.pressure_sensors.paramsChanged.connect(self.plot.refresh_units)
+        pressure_dock = self._add_dock(self.pressure_sensors, Qt.DockWidgetArea.RightDockWidgetArea)
         self.splitDockWidget(sampling_dock, pressure_dock, Qt.Orientation.Vertical)
 
         self._build_view_menu()
@@ -99,6 +105,9 @@ class MainWindow(QMainWindow):
         self.reader.sample.connect(self.plot.append)
         self.reader.warning.connect(lambda msg: self.status.showMessage(msg, 2000))
         self.reader.start()
+        self.loader.set_sample_rate(self.sampling.current_rate())
+        self.loader.set_pin(1, self.sampling.current_pin(1))
+        self.loader.set_pin(2, self.sampling.current_pin(2))
 
     def show_disconnected(self, message: str) -> None:
         self.status.showMessage(message)

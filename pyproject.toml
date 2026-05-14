@@ -13,7 +13,6 @@ dependencies = [
     "pyqtgraph>=0.14.0",
     "pyserial>=3.5",
     "pyside6>=6.11.1",
-    "python-dotenv>=1.0",
 ]
 
 [project.scripts]

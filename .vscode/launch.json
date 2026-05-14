@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "pulsepump: run",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pulsepump",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "preLaunchTask": "prelaunch: format + lint + typecheck"
+    },
+    {
+      "name": "pulsepump: run current file",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "justMyCode": false,
+      "preLaunchTask": "prelaunch: format + lint + typecheck"
+    }
+  ]
+}

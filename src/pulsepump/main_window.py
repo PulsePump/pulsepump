@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError, version
+
 from PySide6.QtCore import QSettings, Qt
-from PySide6.QtWidgets import QDockWidget, QMainWindow, QScrollArea
+from PySide6.QtWidgets import QDockWidget, QLabel, QMainWindow, QScrollArea
 
 from .panels import (
     ConfigPanel,
@@ -29,6 +31,11 @@ class MainWindow(QMainWindow):
         self.plot = PlotView()
         self.setCentralWidget(self.plot)
         self.status = self.statusBar()
+        try:
+            pkg_version = version("pulsepump")
+        except PackageNotFoundError:
+            pkg_version = "dev"
+        self.status.addPermanentWidget(QLabel(f"v{pkg_version}"))
         self.reader: SerialReader | None = None
 
         self.setDockNestingEnabled(True)

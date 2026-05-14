@@ -18,9 +18,13 @@ class SerialReader(QThread):
 
     def run(self) -> None:
         assert self.proc.stdout is not None
-        for line in self.proc.stdout:
-            if self.isInterruptionRequested():
-                break
+        stdout = self.proc.stdout
+        while not self.isInterruptionRequested():
+            line = stdout.readline()
+            if not line:
+                if self.proc.poll() is not None:
+                    break
+                continue
             line = line.strip()
             if not line:
                 continue

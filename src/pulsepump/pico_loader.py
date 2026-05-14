@@ -37,10 +37,17 @@ class PicoLoader:
     def start(self) -> subprocess.Popen[str]:
         self.port = find_pico_port()
         firmware = _firmware_path()
+        # Invoke the mpremote console script directly rather than
+        # `python -m mpremote`. debugpy monkey-patches subprocess.Popen and
+        # injects itself into any child whose argv[0] looks like a Python
+        # interpreter; calling the script bypasses that detection so the
+        # child runs unmodified under the VS Code debugger.
+        mpremote_bin = Path(sys.executable).parent / "mpremote"
+        cmd = [str(mpremote_bin), "connect", self.port, "run", str(firmware)]
         self.proc = subprocess.Popen(
-            [sys.executable, "-m", "mpremote", "connect", self.port, "run", str(firmware)],
+            cmd,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
+            stderr=None,
             text=True,
             bufsize=1,
         )

@@ -14,15 +14,19 @@ def run() -> int:
     app = QApplication(sys.argv)
 
     loader = PicoLoader()
+    window = MainWindow(loader)
+    window.show()
+
     try:
         loader.start()
     except PicoNotFoundError as e:
-        QMessageBox.critical(None, "pulsepump", str(e))
-        return 1
+        window.show_disconnected(str(e))
+        QMessageBox.critical(window, "pulsepump", str(e))
     except OSError as e:
-        QMessageBox.critical(None, "pulsepump", f"Failed to launch mpremote: {e}")
-        return 1
+        msg = f"Failed to launch mpremote: {e}"
+        window.show_disconnected(msg)
+        QMessageBox.critical(window, "pulsepump", msg)
+    else:
+        window.attach_reader()
 
-    window = MainWindow(loader)
-    window.show()
     return app.exec()

@@ -6,6 +6,8 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import QTimer, Slot
 
+from pulsepump import pressure
+
 
 class PlotView(pg.PlotWidget):
     def __init__(self, buffer_size: int = 2500, redraw_hz: int = 30, parent=None) -> None:
@@ -13,7 +15,7 @@ class PlotView(pg.PlotWidget):
         self.setBackground("w")
         self.showGrid(x=True, y=True, alpha=0.3)
         self.setLabel("bottom", "t", units="s")
-        self.setLabel("left", "ADC (u16)")
+        self.setLabel("left", "Pressure", units=pressure.P_UNITS)
         self.addLegend()
 
         self.n = buffer_size
@@ -23,8 +25,8 @@ class PlotView(pg.PlotWidget):
         self.idx = 0
         self.filled = 0
 
-        self.curve0 = self.plot(pen=pg.mkPen("#1f77b4", width=2), name="ADC0 (GP26)")
-        self.curve1 = self.plot(pen=pg.mkPen("#d62728", width=2), name="ADC1 (GP27)")
+        self.curve0 = self.plot(pen=pg.mkPen("#1f77b4", width=2), name="P0 (GP26)")
+        self.curve1 = self.plot(pen=pg.mkPen("#d62728", width=2), name="P1 (GP27)")
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.redraw)
@@ -52,5 +54,5 @@ class PlotView(pg.PlotWidget):
             t = self.t[order]
             v0 = self.v0[order]
             v1 = self.v1[order]
-        self.curve0.setData(t, v0)
-        self.curve1.setData(t, v1)
+        self.curve0.setData(t, pressure.counts_to_pressure_arr(v0))
+        self.curve1.setData(t, pressure.counts_to_pressure_arr(v1))

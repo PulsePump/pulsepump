@@ -19,16 +19,23 @@ class MainWindow(QMainWindow):
         self.plot = PlotView()
         self.setCentralWidget(self.plot)
         self.status = self.statusBar()
-        self.status.showMessage(f"Connected to Pico on {loader.port}")
+        self.reader: SerialReader | None = None
 
-        assert loader.proc is not None
-        self.reader = SerialReader(loader.proc, parent=self)
+    def attach_reader(self) -> None:
+        assert self.loader.proc is not None
+        self.status.showMessage(f"Connected to Pico on {self.loader.port}")
+        self.reader = SerialReader(self.loader.proc, parent=self)
         self.reader.sample.connect(self.plot.append)
         self.reader.warning.connect(lambda msg: self.status.showMessage(msg, 2000))
         self.reader.start()
 
+    def show_disconnected(self, message: str) -> None:
+        self.status.showMessage(message)
+
     def closeEvent(self, event) -> None:
-        self.reader.requestInterruption()
+        if self.reader is not None:
+            self.reader.requestInterruption()
         self.loader.stop()
-        self.reader.wait(2000)
+        if self.reader is not None:
+            self.reader.wait(2000)
         super().closeEvent(event)

@@ -1,0 +1,50 @@
+[project]
+name = "pulsepump"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Tahmid Azam", email = "tahmid_azam@icloud.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "mpremote>=1.28.0",
+    "numpy>=2.4.4",
+    "pyqtgraph>=0.14.0",
+    "pyserial>=3.5",
+    "pyside6>=6.11.1",
+]
+
+[project.scripts]
+pulsepump = "pulsepump:main"
+
+[build-system]
+requires = ["uv_build>=0.11.12,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.12",
+    "ty>=0.0.35",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py314"
+extend-exclude = ["src/pulsepump/firmware"]
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",   # pycodestyle / pyflakes
+    "I",             # isort
+    "UP",            # pyupgrade
+    "B",             # bugbear
+    "SIM",           # simplify
+    "RUF",           # ruff-specific
+]
+
+[tool.ty.src]
+exclude = ["src/pulsepump/firmware"]
+
+[tool.ty.rules]
+unresolved-import = "ignore"  # PySide6 ships partial stubs; pyqtgraph has none

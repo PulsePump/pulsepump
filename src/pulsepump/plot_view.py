@@ -1,0 +1,56 @@
+"""PyQtGraph plot with two scrolling ring-buffered traces."""
+
+from __future__ import annotations
+
+import numpy as np
+import pyqtgraph as pg
+from PySide6.QtCore import QTimer, Slot
+
+
+class PlotView(pg.PlotWidget):
+    def __init__(self, buffer_size: int = 2500, redraw_hz: int = 30, parent=None) -> None:
+        super().__init__(parent)
+        self.setBackground("w")
+        self.showGrid(x=True, y=True, alpha=0.3)
+        self.setLabel("bottom", "t", units="s")
+        self.setLabel("left", "ADC (u16)")
+        self.addLegend()
+
+        self.n = buffer_size
+        self.t = np.zeros(self.n, dtype=np.float64)
+        self.v0 = np.zeros(self.n, dtype=np.float32)
+        self.v1 = np.zeros(self.n, dtype=np.float32)
+        self.idx = 0
+        self.filled = 0
+
+        self.curve0 = self.plot(pen=pg.mkPen("#1f77b4", width=2), name="ADC0 (GP26)")
+        self.curve1 = self.plot(pen=pg.mkPen("#d62728", width=2), name="ADC1 (GP27)")
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.redraw)
+        self.timer.start(1000 // redraw_hz)
+
+    @Slot(int, int, int)
+    def append(self, t_us: int, v0: int, v1: int) -> None:
+        i = self.idx
+        self.t[i] = t_us / 1_000_000.0
+        self.v0[i] = v0
+        self.v1[i] = v1
+        self.idx = (i + 1) % self.n
+        if self.filled < self.n:
+            self.filled += 1
+
+    def redraw(self) -> None:
+        if self.filled == 0:
+            return
+        if self.filled < self.n:
+            t = self.t[: self.filled]
+            v0 = self.v0[: self.filled]
+            v1 = self.v1[: self.filled]
+        else:
+            order = np.r_[self.idx : self.n, 0 : self.idx]
+            t = self.t[order]
+            v0 = self.v0[order]
+            v1 = self.v1[order]
+        self.curve0.setData(t, v0)
+        self.curve1.setData(t, v1)

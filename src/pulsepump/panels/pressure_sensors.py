@@ -1,5 +1,3 @@
-"""Pressure sensors panel — live calibration from the sensor datasheet."""
-
 from __future__ import annotations
 
 from PySide6.QtCore import QSettings, QTimer, Signal
@@ -13,7 +11,7 @@ from PySide6.QtWidgets import (
 
 from pulsepump import pressure
 
-from .base import ConfigPanel
+from .base import FIELD_WIDTH, ConfigPanel, apply_field_width
 
 _SETTINGS_ORG = "pulsepump"
 _SETTINGS_APP = "pulsepump"
@@ -74,6 +72,7 @@ class PressureSensorsPanel(ConfigPanel):
         self.pfs_spin.setSingleStep(1.0)
         self.pfs_spin.setAccelerated(True)
         self.pfs_spin.setKeyboardTracking(False)
+        self.pfs_spin.setFixedWidth(FIELD_WIDTH)
         self.pfs_spin.setValue(p_fs)
 
         self.units_combo = QComboBox(self)
@@ -83,9 +82,11 @@ class PressureSensorsPanel(ConfigPanel):
             self.units_combo.addItem(units)
             idx = self.units_combo.count() - 1
         self.units_combo.setCurrentIndex(idx)
+        apply_field_width(self.units_combo)
 
         datasheet_group = QGroupBox("Datasheet", self)
         form = QFormLayout(datasheet_group)
+        form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         form.addRow("V at min pressure", self.vmin_spin)
         form.addRow("V at max pressure", self.vmax_spin)
         form.addRow("Full-scale pressure", self.pfs_spin)
@@ -98,10 +99,8 @@ class PressureSensorsPanel(ConfigPanel):
         self.divider_spin.setSingleStep(0.01)
         self.divider_spin.setAccelerated(True)
         self.divider_spin.setKeyboardTracking(False)
+        self.divider_spin.setFixedWidth(FIELD_WIDTH)
         self.divider_spin.setValue(divider)
-        # Reserve enough room for the widest displayed value plus the step buttons.
-        sample_width = self.divider_spin.fontMetrics().horizontalAdvance("0.000")
-        self.divider_spin.setMinimumWidth(sample_width + 40)
         self.divider_spin.setToolTip(
             "Ratio of ADC input voltage to raw sensor voltage. "
             "For a sensor that swings 0-5 V scaled to fit the Pico's 3.3 V ADC, "
@@ -110,6 +109,7 @@ class PressureSensorsPanel(ConfigPanel):
 
         board_group = QGroupBox("Board", self)
         board_form = QFormLayout(board_group)
+        board_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         board_form.addRow("Voltage divider ratio", self.divider_spin)
         self.body.addWidget(board_group)
 
@@ -137,6 +137,7 @@ class PressureSensorsPanel(ConfigPanel):
         spin.setSuffix(" V")
         spin.setAccelerated(True)
         spin.setKeyboardTracking(False)
+        spin.setFixedWidth(FIELD_WIDTH)
         spin.setValue(value)
         return spin
 

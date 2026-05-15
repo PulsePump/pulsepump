@@ -1,12 +1,10 @@
-"""Sampling panel — sample-rate and ADC pin controls for the Pico firmware."""
-
 from __future__ import annotations
 
 from PySide6.QtCore import QSettings, QTimer, Signal
 from PySide6.QtGui import QStandardItemModel
 from PySide6.QtWidgets import QComboBox, QFormLayout, QGroupBox, QSpinBox, QWidget
 
-from .base import ConfigPanel
+from .base import FIELD_WIDTH, ConfigPanel, apply_field_width
 
 _SETTINGS_ORG = "pulsepump"
 _SETTINGS_APP = "pulsepump"
@@ -38,7 +36,7 @@ def _load_int(settings: QSettings, key: str, default: int) -> int:
 
 
 class SamplingPanel(ConfigPanel):
-    title = "Sampling"
+    title = "Analogue sampling"
 
     sampleRateChanged = Signal(int)
     pinChanged = Signal(int, int)  # (channel, gp)
@@ -57,6 +55,7 @@ class SamplingPanel(ConfigPanel):
         self.rate_spin.setSuffix(" Hz")
         self.rate_spin.setAccelerated(True)
         self.rate_spin.setKeyboardTracking(False)
+        self.rate_spin.setFixedWidth(FIELD_WIDTH)
         self.rate_spin.setValue(initial_hz)
 
         pin1_initial = _load_int(self._settings, _PIN1_KEY, _DEFAULT_PIN1)
@@ -69,11 +68,13 @@ class SamplingPanel(ConfigPanel):
 
         rate_group = QGroupBox(parent=self)
         rate_form = QFormLayout(rate_group)
+        rate_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         rate_form.addRow("Sample rate", self.rate_spin)
         self.body.addWidget(rate_group)
 
         pins_group = QGroupBox("Pins", self)
         pins_form = QFormLayout(pins_group)
+        pins_form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
         pins_form.addRow("Pressure sensor 1", self.pin1_combo)
         pins_form.addRow("Pressure sensor 2", self.pin2_combo)
         self.body.addWidget(pins_group)
@@ -97,6 +98,7 @@ class SamplingPanel(ConfigPanel):
             combo.addItem(label, gp)
         idx = combo.findData(selected_gp)
         combo.setCurrentIndex(idx if idx >= 0 else 0)
+        apply_field_width(combo)
         return combo
 
     def current_rate(self) -> int:

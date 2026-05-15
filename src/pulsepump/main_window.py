@@ -1,5 +1,3 @@
-"""Main application window."""
-
 from __future__ import annotations
 
 from importlib.metadata import PackageNotFoundError, version
@@ -12,19 +10,20 @@ from .panels import (
     FunctionGeneratorPanel,
     PressureSensorsPanel,
     SamplingPanel,
+    WaveformPreviewPanel,
 )
 from .pico_loader import PicoLoader
 from .plot_view import PlotView
 from .serial_reader import SerialReader
 
-_SETTINGS_ORG = "pulsepump"
-_SETTINGS_APP = "pulsepump"
+_SETTINGS_ORG = "PulsePump"
+_SETTINGS_APP = "PulsePump"
 
 
 class MainWindow(QMainWindow):
     def __init__(self, loader: PicoLoader) -> None:
         super().__init__()
-        self.setWindowTitle("pulsepump — live ADC")
+        self.setWindowTitle("PulsePump")
         self.resize(1400, 800)
 
         self.loader = loader
@@ -48,7 +47,6 @@ class MainWindow(QMainWindow):
 
         self._docks: dict[str, QDockWidget] = {}
 
-        self._add_dock(FunctionGeneratorPanel(), Qt.DockWidgetArea.LeftDockWidgetArea)
         self.sampling = SamplingPanel()
         self.sampling.sampleRateChanged.connect(self.loader.set_sample_rate)
         self.sampling.pinChanged.connect(self.loader.set_pin)
@@ -61,7 +59,20 @@ class MainWindow(QMainWindow):
         pressure_dock = self._add_dock(self.pressure_sensors, Qt.DockWidgetArea.RightDockWidgetArea)
         self.splitDockWidget(sampling_dock, pressure_dock, Qt.Orientation.Vertical)
 
+        self.function_generator = FunctionGeneratorPanel()
+        self.waveform_preview = WaveformPreviewPanel()
+        self.function_generator.waveformChanged.connect(self.waveform_preview.set_waveform)
+        self.pressure_sensors.paramsChanged.connect(self.function_generator.refresh_units)
+        self.pressure_sensors.paramsChanged.connect(self.waveform_preview.refresh_units)
+        fg_dock = self._add_dock(self.function_generator, Qt.DockWidgetArea.LeftDockWidgetArea)
+        preview_dock = self._add_dock(self.waveform_preview, Qt.DockWidgetArea.LeftDockWidgetArea)
+        self.splitDockWidget(fg_dock, preview_dock, Qt.Orientation.Vertical)
+        self.waveform_preview.set_waveform(self.function_generator.current_config())
+
         self._build_view_menu()
+        # Snapshot the freshly-built layout so "Reset layout" can revert to it.
+        self._default_geometry = self.saveGeometry()
+        self._default_state = self.saveState()
         self._restore_layout()
 
     def _add_dock(self, panel: ConfigPanel, area: Qt.DockWidgetArea) -> QDockWidget:
@@ -103,7 +114,12 @@ class MainWindow(QMainWindow):
         s = QSettings(_SETTINGS_ORG, _SETTINGS_APP)
         s.remove("windowState")
         s.remove("geometry")
-        self.status.showMessage("Layout reset — restart to apply defaults", 4000)
+        for dock in self._docks.values():
+            dock.setVisible(True)
+            dock.setFloating(False)
+        self.restoreState(self._default_state)
+        self.restoreGeometry(self._default_geometry)
+        self.status.showMessage("Layout reset", 2000)
 
     def attach_reader(self) -> None:
         assert self.loader.proc is not None

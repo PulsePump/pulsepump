@@ -5,6 +5,12 @@
 3. Create a virtual environment by running `uv sync`;
 4. Run the application using `uv run pulsepump`.
 
+## Stack
+
+- [Qt](https://www.qt.io/) via [PySide6](https://doc.qt.io/qtforpython-6/gettingstarted.html#getting-started) as the cross-platform UI framework; and
+- [PyQtGraph](https://www.pyqtgraph.org/) for plotting.
+- [Sphinx](https://www.sphinx-doc.org/) for documentation.
+
 ## Development
 
 Tools:
@@ -15,19 +21,31 @@ Tools:
 
 ### VS Code
 
-The repo ships a `.vscode/` workspace with two launch configs and a prelaunch task:
+Install extensions: [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python), [Python Debugger](https://marketplace.visualstudio.com/items?itemName=ms-python.debugpy), [Ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff), [ty](https://marketplace.visualstudio.com/items?itemName=astral-sh.ty).
 
-1. Install extensions: [Python](https://marketplace.visualstudio.com/items?itemName=ms-python.python), [Python Debugger](https://marketplace.visualstudio.com/items?itemName=ms-python.debugpy), [Ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff), and [ty](https://marketplace.visualstudio.com/items?itemName=astral-sh.ty).
-2. Open the Run and Debug panel (`⇧⌘D` / `Ctrl+Shift+D`).
-3. Pick a config and press F5:
-   - **pulsepump: run** — runs `python -m pulsepump` against the workspace `.venv`. Breakpoints in any project file just work.
-   - **pulsepump: run current file** — runs the active file (useful for one-off scripts).
+Launch configs (`⇧⌘D` → F5, with debugger):
 
-Before launching, VS Code runs the composite task `prelaunch: format + lint + typecheck` which executes, in order: `ruff format`, `ruff check`, `ty check`. Format applies in place; lint or typecheck failures **abort the launch** and surface in the Problems panel.
+| Name                          | Runs                  |
+| ----------------------------- | --------------------- |
+| `pulsepump: run`              | `python -m pulsepump` |
+| `pulsepump: run current file` | the active file       |
 
-`.vscode/settings.json` pins the workspace interpreter to `.venv/bin/python` and enables Ruff format-on-save with import sorting.
+Tasks (`⇧⌘P` → "Tasks: Run Task", no debugger):
 
-### Technology stack
+| Name                                         | Runs                                                                               |
+| -------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `pulsepump: run`                             | `uv run pulsepump`                                                                 |
+| `pulsepump: run current file`                | `uv run python ${file}`                                                            |
+| `docs: serve + live reload`                  | `uv run sphinx-autobuild` — opens browser, rebuilds on edits to `docs/` and `src/` |
+| `ruff: format` / `ruff: check` / `ty: check` | individual checks                                                                  |
+| `prelaunch: format + lint + typecheck`       | the three above in sequence                                                        |
 
-- [Qt](https://www.qt.io/) via [PySide6](https://doc.qt.io/qtforpython-6/gettingstarted.html#getting-started) as the cross-platform UI framework; and
-- [PyQtGraph](https://www.pyqtgraph.org/) for plotting.
+Every launch and task depends on `prelaunch: format + lint + typecheck`; failures abort the run and surface in the Problems panel. `.vscode/settings.json` pins the interpreter to `.venv/bin/python` and enables Ruff format-on-save.
+
+## Documentation
+
+You can build locally by running:
+
+```bash
+uv run sphinx-autobuild --open-browser --watch src docs docs/_build/html
+```

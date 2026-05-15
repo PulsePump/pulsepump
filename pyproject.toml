@@ -27,6 +27,13 @@ dev = [
     "ruff>=0.15.12",
     "ty>=0.0.35",
 ]
+docs = [
+    "sphinx>=7,<9",
+    "sphinx-autobuild>=2024.10",
+    "furo>=2024.8",
+    "myst-parser>=3",
+    "linkify-it-py>=2",
+]
 
 [tool.ruff]
 line-length = 100

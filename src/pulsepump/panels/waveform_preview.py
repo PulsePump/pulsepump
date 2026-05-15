@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QWidget
@@ -12,6 +13,9 @@ from .base import ConfigPanel
 # Cap rendering work so high sample rates with low BPM don't drag the UI.
 _MAX_PREVIEW_SAMPLES = 5000
 
+_MODE_FUNCTION = "Function"
+_MODE_OPENBF = "openBF"
+
 
 class WaveformPreviewPanel(ConfigPanel):
     title = "Waveform preview"
@@ -20,6 +24,8 @@ class WaveformPreviewPanel(ConfigPanel):
         super().__init__(parent)
         self.body.setContentsMargins(0, 0, 0, 0)
         self.body.setSpacing(0)
+
+        self._active_mode: str = _MODE_FUNCTION
 
         self.plot = pg.PlotWidget(self)
         self.plot.setBackground("w")
@@ -42,8 +48,16 @@ class WaveformPreviewPanel(ConfigPanel):
         )
         self.body.addWidget(self.plot, stretch=1)
 
+    @Slot(str)
+    def set_mode(self, mode: str) -> None:
+        self._active_mode = mode
+        self.curve.clear()
+        self.markers.clear()
+
     @Slot(object)
     def set_waveform(self, config: WaveformConfig) -> None:
+        if self._active_mode != _MODE_FUNCTION:
+            return
         n = min(config.samples_per_cycle, _MAX_PREVIEW_SAMPLES)
         t, y = sample_one_cycle(config, n=n)
         # ZOH = staircase via stepMode="right"; FOH = straight lines between samples.
@@ -55,6 +69,19 @@ class WaveformPreviewPanel(ConfigPanel):
         else:
             self.markers.clear()
         self.plot.getPlotItem().setXRange(0.0, config.period_s, padding=0.02)
+
+    @Slot(object, object)
+    def set_samples(self, t: np.ndarray, y: np.ndarray) -> None:
+        if self._active_mode != _MODE_OPENBF:
+            return
+        if len(t) == 0:
+            self.curve.setData(x=[], y=[])
+            self.markers.setData(x=[], y=[])
+            return
+        self.curve.setData(t, y, stepMode=None, pen=self._pen)
+        self.markers.clear()
+        if len(t) >= 2:
+            self.plot.getPlotItem().setXRange(float(t[0]), float(t[-1]), padding=0.02)
 
     @Slot()
     def refresh_units(self) -> None:

@@ -1,15 +1,15 @@
 """Dockable configuration panels."""
 
 from .base import ConfigPanel
-from .function_generator import FunctionGeneratorPanel
+from .julia_console import JuliaConsolePanel
 from .pressure_sensors import PressureSensorsPanel
 from .sampling import SamplingPanel
-from .waveform_preview import WaveformPreviewPanel
+from .waveform_generator import WaveformGeneratorPanel
 
 __all__ = [
     "ConfigPanel",
-    "FunctionGeneratorPanel",
+    "JuliaConsolePanel",
     "PressureSensorsPanel",
     "SamplingPanel",
-    "WaveformPreviewPanel",
+    "WaveformGeneratorPanel",
 ]

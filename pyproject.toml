@@ -13,6 +13,7 @@ dependencies = [
     "pyqtgraph>=0.14.0",
     "pyserial>=3.5",
     "pyside6>=6.11.1",
+    "pyyaml>=6.0",
 ]
 
 [project.scripts]
@@ -21,6 +22,9 @@ pulsepump = "pulsepump:main"
 [build-system]
 requires = ["uv_build>=0.11.12,<0.12.0"]
 build-backend = "uv_build"
+
+[tool.uv_build]
+data = { "pulsepump.openbf_models" = ["**/*.yaml", "**/*.dat", "**/*.jl"] }
 
 [dependency-groups]
 dev = [

@@ -7,10 +7,10 @@ from PySide6.QtWidgets import QDockWidget, QLabel, QMainWindow, QScrollArea
 
 from .panels import (
     ConfigPanel,
-    FunctionGeneratorPanel,
+    JuliaConsolePanel,
     PressureSensorsPanel,
     SamplingPanel,
-    WaveformPreviewPanel,
+    WaveformGeneratorPanel,
 )
 from .pico_loader import PicoLoader
 from .plot_view import PlotView
@@ -59,15 +59,20 @@ class MainWindow(QMainWindow):
         pressure_dock = self._add_dock(self.pressure_sensors, Qt.DockWidgetArea.RightDockWidgetArea)
         self.splitDockWidget(sampling_dock, pressure_dock, Qt.Orientation.Vertical)
 
-        self.function_generator = FunctionGeneratorPanel()
-        self.waveform_preview = WaveformPreviewPanel()
-        self.function_generator.waveformChanged.connect(self.waveform_preview.set_waveform)
-        self.pressure_sensors.paramsChanged.connect(self.function_generator.refresh_units)
-        self.pressure_sensors.paramsChanged.connect(self.waveform_preview.refresh_units)
-        fg_dock = self._add_dock(self.function_generator, Qt.DockWidgetArea.LeftDockWidgetArea)
-        preview_dock = self._add_dock(self.waveform_preview, Qt.DockWidgetArea.LeftDockWidgetArea)
-        self.splitDockWidget(fg_dock, preview_dock, Qt.Orientation.Vertical)
-        self.waveform_preview.set_waveform(self.function_generator.current_config())
+        self.waveform_generator = WaveformGeneratorPanel()
+        self.julia_console = JuliaConsolePanel()
+
+        self.waveform_generator.processOutput.connect(self.julia_console.append_line)
+        self.waveform_generator.statusMessage.connect(self.status.showMessage)
+        self.pressure_sensors.paramsChanged.connect(self.waveform_generator.refresh_units)
+
+        self._make_gen_dock()
+        julia_dock = self._add_dock(self.julia_console, Qt.DockWidgetArea.BottomDockWidgetArea)
+        self.waveform_generator.simulationStarted.connect(
+            lambda: (julia_dock.setVisible(True), julia_dock.raise_())
+        )
+
+        self.waveform_generator.replay()
 
         self._build_view_menu()
         # Snapshot the freshly-built layout so "Reset layout" can revert to it.
@@ -89,6 +94,20 @@ class MainWindow(QMainWindow):
             | Qt.DockWidgetArea.BottomDockWidgetArea
         )
         self.addDockWidget(area, dock)
+        self._docks[dock.objectName()] = dock
+        return dock
+
+    def _make_gen_dock(self) -> QDockWidget:
+        dock = QDockWidget(self.waveform_generator.title, self)
+        dock.setObjectName(f"Dock_{type(self.waveform_generator).__name__}")
+        dock.setMinimumWidth(self.waveform_generator.min_width)
+        dock.setWidget(self.waveform_generator)
+        dock.setAllowedAreas(
+            Qt.DockWidgetArea.LeftDockWidgetArea
+            | Qt.DockWidgetArea.RightDockWidgetArea
+            | Qt.DockWidgetArea.BottomDockWidgetArea
+        )
+        self.addDockWidget(Qt.DockWidgetArea.LeftDockWidgetArea, dock)
         self._docks[dock.objectName()] = dock
         return dock
 
@@ -136,6 +155,7 @@ class MainWindow(QMainWindow):
         self.status.showMessage(message)
 
     def closeEvent(self, event) -> None:
+        self.waveform_generator.shutdown()
         s = QSettings(_SETTINGS_ORG, _SETTINGS_APP)
         s.setValue("geometry", self.saveGeometry())
         s.setValue("windowState", self.saveState())

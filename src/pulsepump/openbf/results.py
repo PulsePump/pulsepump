@@ -5,7 +5,7 @@ from pathlib import Path
 
 import numpy as np
 
-from pulsepump import pressure
+from pulsepump.core import pressure
 
 _XS = np.array([0.0, 0.25, 0.5, 0.75, 1.0])
 

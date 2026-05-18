@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from pulsepump import pressure
+from pulsepump.core import pressure
 
 from .base import FIELD_WIDTH, ConfigPanel, apply_field_width
 

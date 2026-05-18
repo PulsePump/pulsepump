@@ -5,6 +5,8 @@ from importlib.metadata import PackageNotFoundError, version
 from PySide6.QtCore import QSettings, Qt
 from PySide6.QtWidgets import QDockWidget, QLabel, QMainWindow, QScrollArea
 
+from ..hardware.pico_loader import PicoLoader
+from ..hardware.serial_reader import SerialReader
 from .panels import (
     ConfigPanel,
     JuliaConsolePanel,
@@ -12,9 +14,7 @@ from .panels import (
     SamplingPanel,
     WaveformGeneratorPanel,
 )
-from .pico_loader import PicoLoader
 from .plot_view import PlotView
-from .serial_reader import SerialReader
 
 _SETTINGS_ORG = "PulsePump"
 _SETTINGS_APP = "PulsePump"

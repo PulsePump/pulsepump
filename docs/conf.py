@@ -25,8 +25,6 @@ version = release
 
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.autosummary",
-    "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx.ext.intersphinx",
     "myst_parser",
@@ -40,8 +38,7 @@ source_suffix = {
     ".rst": "restructuredtext",
 }
 
-# -- Autodoc / autosummary ---------------------------------------------------
-autosummary_generate = True
+# -- Autodoc -----------------------------------------------------------------
 autodoc_default_options = {
     "members": True,
     "undoc-members": True,
@@ -50,9 +47,6 @@ autodoc_default_options = {
 # MicroPython-only; firmware modules import this on the Pico but not on CPython.
 autodoc_mock_imports = ["machine"]
 autodoc_typehints = "description"
-
-napoleon_google_docstring = True
-napoleon_numpy_docstring = True
 
 # -- MyST --------------------------------------------------------------------
 myst_enable_extensions = [

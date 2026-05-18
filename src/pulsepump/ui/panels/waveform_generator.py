@@ -35,7 +35,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from pulsepump import pressure
+from pulsepump.core import pressure
+from pulsepump.core.waveform import Interpolation, WaveformConfig, WaveformType, sample_one_cycle
 from pulsepump.openbf.detect import (
     INSTALL_JULIA_URL,
     INSTALL_OPENBF_CMD,
@@ -50,7 +51,6 @@ from pulsepump.openbf.results import (
     parse_vessel_pressure,
 )
 from pulsepump.openbf.runner import OpenBFRunner
-from pulsepump.waveform import Interpolation, WaveformConfig, WaveformType, sample_one_cycle
 
 from .base import FIELD_WIDTH, ConfigPanel, apply_field_width
 

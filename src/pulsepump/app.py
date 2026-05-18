@@ -6,8 +6,8 @@ import sys
 
 from PySide6.QtWidgets import QApplication, QMessageBox
 
-from .main_window import MainWindow
-from .pico_loader import PicoLoader, PicoNotFoundError
+from .hardware.pico_loader import PicoLoader, PicoNotFoundError
+from .ui.main_window import MainWindow
 
 
 def run() -> int:

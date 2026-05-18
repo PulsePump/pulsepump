@@ -5,8 +5,8 @@ import pyqtgraph as pg
 from PySide6.QtCore import Slot
 from PySide6.QtWidgets import QWidget
 
-from pulsepump import pressure
-from pulsepump.waveform import Interpolation, WaveformConfig, sample_one_cycle
+from pulsepump.core import pressure
+from pulsepump.core.waveform import Interpolation, WaveformConfig, sample_one_cycle
 
 from .base import ConfigPanel
 

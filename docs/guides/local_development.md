@@ -1,4 +1,4 @@
-# Development
+# Local development
 
 Ensure uv is installed onto your system. Follow the installation instructions in the uv documentation: https://docs.astral.sh/uv/.
 

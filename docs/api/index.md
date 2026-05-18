@@ -1,9 +1,9 @@
 # API Reference
 
-```{eval-rst}
-.. autosummary::
-   :toctree: _generated
-   :recursive:
+```{toctree}
+:maxdepth: 2
 
-   pulsepump
+core
+hardware
+openbf
 ```

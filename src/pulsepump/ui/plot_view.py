@@ -6,7 +6,7 @@ import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import QTimer, Slot
 
-from pulsepump import pressure
+from pulsepump.core import pressure
 
 
 class PlotView(pg.PlotWidget):

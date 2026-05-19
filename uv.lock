@@ -404,7 +404,7 @@ requires-dist = [
     { name = "mpremote", specifier = ">=1.28.0" },
     { name = "numpy", specifier = ">=2.4.4" },
     { name = "pydantic", specifier = ">=2.0" },
-    { name = "pyqtgraph", specifier = ">=0.14.0" },
+    { name = "pyqtgraph", specifier = ">=0.13" },
     { name = "pyserial", specifier = ">=3.5" },
     { name = "pyside6", specifier = ">=6.11.1" },
     { name = "pyyaml", specifier = ">=6.0" },

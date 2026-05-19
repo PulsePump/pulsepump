@@ -3,30 +3,29 @@
 from __future__ import annotations
 
 import sys
+from pathlib import Path
 
-from PySide6.QtWidgets import QApplication, QMessageBox
+from PySide6.QtWidgets import QApplication
 
-from .hardware.pico_loader import PicoLoader, PicoNotFoundError
-from .ui.main_window import MainWindow
+from .ui.manager import DocumentManager
 
 
 def run() -> int:
     app = QApplication(sys.argv)
+    app.setApplicationName("PulsePump")
+    app.setOrganizationName("PulsePump")
 
-    loader = PicoLoader()
-    window = MainWindow(loader)
-    window.show()
+    # Prevent Qt from quitting automatically when the last window closes;
+    # DocumentManager drives the lifecycle instead.
+    app.setQuitOnLastWindowClosed(False)
 
-    try:
-        loader.start()
-    except PicoNotFoundError as e:
-        window.show_disconnected(str(e))
-        QMessageBox.critical(window, "pulsepump", str(e))
-    except OSError as e:
-        msg = f"Failed to launch mpremote: {e}"
-        window.show_disconnected(msg)
-        QMessageBox.critical(window, "pulsepump", msg)
+    manager = DocumentManager.instance()
+
+    paths = [Path(a) for a in sys.argv[1:] if Path(a).exists()]
+    if paths:
+        for path in paths:
+            manager.open_file(path)
     else:
-        window.attach_reader()
+        manager.new_window()
 
     return app.exec()

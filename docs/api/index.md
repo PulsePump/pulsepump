@@ -6,4 +6,5 @@
 core
 hardware
 openbf
+ui
 ```

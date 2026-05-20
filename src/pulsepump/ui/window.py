@@ -8,10 +8,12 @@ from PySide6.QtWidgets import (
     QFileDialog,
     QMainWindow,
     QMessageBox,
+    QStackedWidget,
     QWidget,
 )
 
 from .document import Document
+from .editor import EditorWidget
 from .programme_editor import ProgrammeEditorWidget
 
 
@@ -24,16 +26,27 @@ class DocumentWindow(QMainWindow):
 
         self._document = document
         self._editor = ProgrammeEditorWidget(document, self)
-        self.setCentralWidget(self._editor)
+        self._yaml_view = EditorWidget(document, self)
+        self._yaml_view.setReadOnly(True)
+        self._view_stack = QStackedWidget(self)
+        self._view_stack.addWidget(self._editor)  # 0
+        self._view_stack.addWidget(self._yaml_view)  # 1
+        self.setCentralWidget(self._view_stack)
         self._editor.status_message.connect(self.statusBar().showMessage)
 
         self._remove_block_act: QAction  # assigned inside _build_menu
+        self._save_act: QAction
+        self._save_as_act: QAction
         self._build_menu()
         self._update_title()
 
         document.modified_changed.connect(lambda _: self._update_title())
         document.path_changed.connect(self._update_title)
         self._editor.remove_block_enabled.connect(self._remove_block_act.setEnabled)
+        self._editor.simulation_running_changed.connect(self._on_simulation_running_changed)
+        self._editor.save_enabled_changed.connect(self._on_save_enabled_changed)
+        # Sync initial state.
+        self._apply_save_enabled(self._editor.can_save())
 
     @property
     def document(self) -> Document:
@@ -54,15 +67,15 @@ class DocumentWindow(QMainWindow):
 
         file_menu.addSeparator()
 
-        save_act = QAction("&Save", self)
-        save_act.setShortcut(QKeySequence.StandardKey.Save)
-        save_act.triggered.connect(self.save)
-        file_menu.addAction(save_act)
+        self._save_act = QAction("&Save", self)
+        self._save_act.setShortcut(QKeySequence.StandardKey.Save)
+        self._save_act.triggered.connect(self.save)
+        file_menu.addAction(self._save_act)
 
-        save_as_act = QAction("Save &As…", self)
-        save_as_act.setShortcut(QKeySequence.StandardKey.SaveAs)
-        save_as_act.triggered.connect(self.save_as)
-        file_menu.addAction(save_as_act)
+        self._save_as_act = QAction("Save &As…", self)
+        self._save_as_act.setShortcut(QKeySequence.StandardKey.SaveAs)
+        self._save_as_act.triggered.connect(self.save_as)
+        file_menu.addAction(self._save_as_act)
 
         file_menu.addSeparator()
 
@@ -91,6 +104,20 @@ class DocumentWindow(QMainWindow):
         zoom_fit_act.triggered.connect(self._editor.zoom_to_fit)
         programme_menu.addAction(zoom_fit_act)
 
+        view_menu = self.menuBar().addMenu("&View")
+        self._yaml_view_act = QAction("Show &YAML Source", self)
+        self._yaml_view_act.setShortcut(QKeySequence("Ctrl+Shift+Y"))
+        self._yaml_view_act.setCheckable(True)
+        self._yaml_view_act.toggled.connect(self._on_toggle_yaml_view)
+        view_menu.addAction(self._yaml_view_act)
+
+    def _on_toggle_yaml_view(self, checked: bool) -> None:
+        self._view_stack.setCurrentIndex(1 if checked else 0)
+        if checked:
+            self.statusBar().showMessage("YAML source (read-only)", 0)
+        else:
+            self.statusBar().clearMessage()
+
     def _new_document(self) -> None:
         from .manager import DocumentManager
 
@@ -111,7 +138,24 @@ class DocumentWindow(QMainWindow):
         for path_str in paths:
             DocumentManager.instance().open_file(Path(path_str))
 
+    def _on_simulation_running_changed(self, running: bool) -> None:
+        if running:
+            self.statusBar().showMessage("Simulation running — saving disabled", 0)
+        # Actual enable/disable is handled by save_enabled_changed which folds
+        # in both the simulation-running and unsimulated-openbf conditions.
+
+    def _on_save_enabled_changed(self, enabled: bool) -> None:
+        self._apply_save_enabled(enabled)
+        if not enabled and not self._editor._simulating:
+            self.statusBar().showMessage("Simulation not run — saving disabled", 0)
+
+    def _apply_save_enabled(self, enabled: bool) -> None:
+        self._save_act.setEnabled(enabled)
+        self._save_as_act.setEnabled(enabled)
+
     def save(self) -> bool:
+        if not self._editor.can_save():
+            return False
         if self._document.path is None:
             return self.save_as()
         self.statusBar().showMessage("Saving…")
@@ -159,6 +203,16 @@ class DocumentWindow(QMainWindow):
     def _confirm_discard(self) -> bool:
         if not self._document.modified:
             return True
+        if not self._editor.can_save():
+            # Save is not a valid option (simulation pending or running); only offer Discard/Cancel.
+            reply = QMessageBox.question(
+                self,
+                "Unsaved changes",
+                f'"{self._document.display_name}" has unsaved changes that cannot be saved '
+                f"because an openBF simulation is pending. Discard them?",
+                QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
+            )
+            return reply == QMessageBox.StandardButton.Discard
         reply = QMessageBox.question(
             self,
             "Unsaved changes",

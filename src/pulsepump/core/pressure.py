@@ -25,7 +25,7 @@ DIVIDER_RATIO = 0.66  # 3.3 V ADC / 5 V sensor supply
 V_SENSOR_MIN = 0.5
 V_SENSOR_MAX = 4.5
 P_FULL_SCALE = 100.0
-P_UNITS = "kPa"
+P_UNITS = "mmHg"
 
 
 class _Config:
@@ -62,7 +62,7 @@ class _Config:
         :param p_full_scale: Full-scale pressure in the active units.
         :param divider_ratio: Resistor-divider ratio between sensor supply and
                               ADC reference (``V_adc / V_supply``).
-        :param units: Display unit string, e.g. ``"kPa"``.
+        :param units: Display unit string, e.g. ``"mmHg"``.
         """
         if v_sensor_min is not None:
             self.v_sensor_min = v_sensor_min

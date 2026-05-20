@@ -80,6 +80,11 @@ class Document(QObject):
             self.path_changed.emit()
         self._set_modified(False)
 
+    def clear_modified(self) -> None:
+        """Reset the modified flag without touching content or path."""
+
+        self._set_modified(False)
+
     def _set_modified(self, value: bool) -> None:
         if value == self._modified:
             return

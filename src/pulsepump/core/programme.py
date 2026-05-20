@@ -22,7 +22,7 @@ from pulsepump.core.waveform import Interpolation, WaveformConfig, WaveformType
 PROGRAMME_VERSION = "1.0"
 """Current file-format version written to every saved programme."""
 
-PressureUnits = Literal["Pa", "kPa", "mmHg", "psi", "bar"]
+PressureUnits = Literal["Pa", "mmHg", "psi", "bar"]
 """Accepted pressure unit strings."""
 
 

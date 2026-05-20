@@ -128,6 +128,47 @@ def sample(config: WaveformConfig, t: np.ndarray) -> np.ndarray:
     return config.amplitude * _shape(config, u) + config.offset
 
 
+# Per-type defaults targeting a 80-120 mmHg oscillation at 60 BPM. For shapes
+# that swing symmetrically around zero (sine/square/triangle/sawtooth) this is
+# amplitude=20, offset=100. PULSE's _shape returns 0/1 (asymmetric), so to get
+# baseline=80 peak=120 we use amplitude=40 offset=80.
+_DEFAULT_FG_PARAMS: dict[WaveformType, dict[str, float]] = {
+    WaveformType.CONSTANT: {"amplitude": 0.0, "offset": 100.0, "duty": 0.5, "symmetry": 0.5},
+    WaveformType.SINE: {"amplitude": 20.0, "offset": 100.0, "duty": 0.5, "symmetry": 0.5},
+    WaveformType.SQUARE: {"amplitude": 20.0, "offset": 100.0, "duty": 0.5, "symmetry": 0.5},
+    WaveformType.TRIANGLE: {"amplitude": 20.0, "offset": 100.0, "duty": 0.5, "symmetry": 0.5},
+    WaveformType.SAWTOOTH: {"amplitude": 20.0, "offset": 100.0, "duty": 0.5, "symmetry": 0.5},
+    WaveformType.PULSE: {"amplitude": 40.0, "offset": 80.0, "duty": 0.2, "symmetry": 0.5},
+}
+
+
+def default_fg_config(
+    type: WaveformType,
+    sample_rate_hz: float,
+    bpm: float = 60.0,
+    phase: float = 0.0,
+    interpolation: Interpolation = Interpolation.FIRST_ORDER_HOLD,
+) -> WaveformConfig:
+    """Return a :class:`WaveformConfig` populated with physiological defaults.
+
+    Amplitude/offset are chosen so the wave oscillates between 80 and 120
+    (assumed mmHg by the inspector's default). Callers in other unit systems
+    should treat these as numeric defaults and adjust as needed.
+    """
+    p = _DEFAULT_FG_PARAMS[type]
+    return WaveformConfig(
+        type=type,
+        bpm=bpm,
+        amplitude=p["amplitude"],
+        offset=p["offset"],
+        duty=p["duty"],
+        symmetry=p["symmetry"],
+        phase=phase,
+        sample_rate_hz=sample_rate_hz,
+        interpolation=interpolation,
+    )
+
+
 def sample_one_cycle(config: WaveformConfig, n: int | None = None) -> tuple[np.ndarray, np.ndarray]:
     """Return time and sample arrays covering exactly one complete cycle.
 

@@ -15,6 +15,7 @@ from PySide6.QtWidgets import (
 from .document import Document
 from .editor import EditorWidget
 from .programme_editor import ProgrammeEditorWidget
+from .tmc2209_window import Tmc2209Window
 
 
 class DocumentWindow(QMainWindow):
@@ -37,6 +38,7 @@ class DocumentWindow(QMainWindow):
         self._remove_block_act: QAction  # assigned inside _build_menu
         self._save_act: QAction
         self._save_as_act: QAction
+        self._tmc2209_window: Tmc2209Window | None = None
         self._build_menu()
         self._update_title()
 
@@ -104,12 +106,24 @@ class DocumentWindow(QMainWindow):
         zoom_fit_act.triggered.connect(self._editor.zoom_to_fit)
         programme_menu.addAction(zoom_fit_act)
 
+        hardware_menu = self.menuBar().addMenu("&Hardware")
+        tmc_act = QAction("TMC2209 Motor Controller…", self)
+        tmc_act.triggered.connect(self._on_show_tmc2209)
+        hardware_menu.addAction(tmc_act)
+
         view_menu = self.menuBar().addMenu("&View")
         self._yaml_view_act = QAction("Show &YAML Source", self)
         self._yaml_view_act.setShortcut(QKeySequence("Ctrl+Shift+Y"))
         self._yaml_view_act.setCheckable(True)
         self._yaml_view_act.toggled.connect(self._on_toggle_yaml_view)
         view_menu.addAction(self._yaml_view_act)
+
+    def _on_show_tmc2209(self) -> None:
+        if self._tmc2209_window is None:
+            self._tmc2209_window = Tmc2209Window(parent=self)
+        self._tmc2209_window.show()
+        self._tmc2209_window.raise_()
+        self._tmc2209_window.activateWindow()
 
     def _on_toggle_yaml_view(self, checked: bool) -> None:
         self._view_stack.setCurrentIndex(1 if checked else 0)

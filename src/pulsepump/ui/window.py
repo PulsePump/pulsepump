@@ -14,6 +14,7 @@ from PySide6.QtWidgets import (
 
 from .document import Document
 from .editor import EditorWidget
+from .hardware_bench import HardwareBenchWindow
 from .programme_editor import ProgrammeEditorWidget
 from .tmc2209_window import Tmc2209Window
 
@@ -39,6 +40,7 @@ class DocumentWindow(QMainWindow):
         self._save_act: QAction
         self._save_as_act: QAction
         self._tmc2209_window: Tmc2209Window | None = None
+        self._hardware_bench_window: HardwareBenchWindow | None = None
         self._build_menu()
         self._update_title()
 
@@ -107,6 +109,9 @@ class DocumentWindow(QMainWindow):
         programme_menu.addAction(zoom_fit_act)
 
         hardware_menu = self.menuBar().addMenu("&Hardware")
+        bench_act = QAction("Hardware &Bench…", self)
+        bench_act.triggered.connect(self._on_show_hardware_bench)
+        hardware_menu.addAction(bench_act)
         tmc_act = QAction("TMC2209 Motor Controller…", self)
         tmc_act.triggered.connect(self._on_show_tmc2209)
         hardware_menu.addAction(tmc_act)
@@ -124,6 +129,13 @@ class DocumentWindow(QMainWindow):
         self._tmc2209_window.show()
         self._tmc2209_window.raise_()
         self._tmc2209_window.activateWindow()
+
+    def _on_show_hardware_bench(self) -> None:
+        if self._hardware_bench_window is None:
+            self._hardware_bench_window = HardwareBenchWindow(parent=self)
+        self._hardware_bench_window.show()
+        self._hardware_bench_window.raise_()
+        self._hardware_bench_window.activateWindow()
 
     def _on_toggle_yaml_view(self, checked: bool) -> None:
         self._view_stack.setCurrentIndex(1 if checked else 0)

@@ -22,7 +22,7 @@ from pulsepump.core.waveform import Interpolation, WaveformConfig, WaveformType
 PROGRAMME_VERSION = "1.0"
 """Current file-format version written to every saved programme."""
 
-PressureUnits = Literal["Pa", "kPa", "mmHg", "psi", "bar"]
+PressureUnits = Literal["Pa", "mmHg", "psi", "bar"]
 """Accepted pressure unit strings."""
 
 
@@ -121,12 +121,14 @@ class Block(BaseModel):
     The effective duration of a block is
     ``sample_count / programme.sampling_rate_hz * repeat_count`` seconds.
 
+    :param name: Human-readable block name; defaults to empty string.
     :param repeat_count: Number of times to tile the cycle; must be at least 1.
     :param samples_f32_b64: Single cycle encoded as a base64 float32 byte string.
                             Must decode to a non-empty array.
     :param source: Provenance record describing how the samples were generated.
     """
 
+    name: str = ""
     repeat_count: int = Field(ge=1)
     samples_f32_b64: str
     source: BlockSource

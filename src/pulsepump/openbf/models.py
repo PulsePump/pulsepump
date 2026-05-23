@@ -24,7 +24,10 @@ def _parse_bundle(key: str, yaml_text: str) -> ModelBundle | None:
     if not vessels:
         return None
     yaml_name = f"{project}.yaml"
-    inlet_name = f"{project}_inlet.dat"
+    # openBF's principal inlet filename is configurable via the YAML
+    # `inlet_file` field; fall back to the `{project}_inlet.dat` convention
+    # only if the field is missing.
+    inlet_name = str(data.get("inlet_file") or f"{project}_inlet.dat")
     label = key.replace("/", " / ")
     return ModelBundle(
         key=key,

@@ -15,3 +15,6 @@ wheels/
 # Sphinx build output
 docs/_build/
 docs/api/_generated/
+
+# Editor local history
+.history/

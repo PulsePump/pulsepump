@@ -45,7 +45,15 @@ docs = [
 [tool.ruff]
 line-length = 100
 target-version = "py314"
-extend-exclude = ["src/pulsepump/firmware"]
+extend-exclude = [
+    "src/pulsepump/firmware",
+    # MicroPython scratch scripts that run on the Pico, not under CPython.
+    "LED_control.py",
+    "Servo_control.py",
+    "draft_pid.py",
+    "blink.py",
+    "pinch_test.py",
+]
 
 [tool.ruff.lint]
 select = [

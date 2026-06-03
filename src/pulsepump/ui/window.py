@@ -39,6 +39,7 @@ class DocumentWindow(QMainWindow):
         self._remove_block_act: QAction  # assigned inside _build_menu
         self._save_act: QAction
         self._save_as_act: QAction
+        self._export_csv_act: QAction
         self._tmc2209_window: Tmc2209Window | None = None
         self._hardware_bench_window: HardwareBenchWindow | None = None
         self._build_menu()
@@ -80,6 +81,13 @@ class DocumentWindow(QMainWindow):
         self._save_as_act.setShortcut(QKeySequence.StandardKey.SaveAs)
         self._save_as_act.triggered.connect(self.save_as)
         file_menu.addAction(self._save_as_act)
+
+        file_menu.addSeparator()
+
+        self._export_csv_act = QAction("&Export to CSV…", self)
+        self._export_csv_act.setShortcut(QKeySequence("Ctrl+E"))
+        self._export_csv_act.triggered.connect(self.export_csv)
+        file_menu.addAction(self._export_csv_act)
 
         file_menu.addSeparator()
 
@@ -178,6 +186,33 @@ class DocumentWindow(QMainWindow):
     def _apply_save_enabled(self, enabled: bool) -> None:
         self._save_act.setEnabled(enabled)
         self._save_as_act.setEnabled(enabled)
+        self._export_csv_act.setEnabled(self._editor.can_export())
+
+    def export_csv(self) -> bool:
+        if not self._editor.can_export():
+            return False
+        docs_dir = QStandardPaths.writableLocation(
+            QStandardPaths.StandardLocation.DocumentsLocation
+        )
+        stem = (self._document.path.stem if self._document.path else "Untitled") + "_samples"
+        default = str(Path(docs_dir) / f"{stem}.csv")
+        path_str, _ = QFileDialog.getSaveFileName(
+            self,
+            "Export to CSV",
+            default,
+            "CSV files (*.csv);;All files (*)",
+        )
+        if not path_str:
+            return False
+        self.statusBar().showMessage("Exporting…")
+        try:
+            n = self._editor.export_csv(Path(path_str))
+        except (OSError, RuntimeError) as exc:
+            self.statusBar().showMessage(f"Export failed: {exc}")
+            QMessageBox.critical(self, "Export failed", str(exc))
+            return False
+        self.statusBar().showMessage(f"Exported {n} samples", 3000)
+        return True
 
     def save(self) -> bool:
         if not self._editor.can_save():

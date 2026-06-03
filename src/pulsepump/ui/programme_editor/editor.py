@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, cast
 
 import numpy as np
@@ -14,6 +15,7 @@ from pulsepump.core.programme import (
     PressureUnits,
     Programme,
     decode_samples,
+    decompress,
     encode_samples,
 )
 from pulsepump.core.units import convert as convert_pressure_value
@@ -611,6 +613,31 @@ class ProgrammeEditorWidget(QWidget):
 
     def zoom_to_fit(self) -> None:
         self._waveform.zoom_to_fit()
+
+    def can_export(self) -> bool:
+        """Whether a programme with usable samples is currently loaded."""
+        return self._programme is not None and not self._unsimulated_indices()
+
+    def export_csv(self, path: Path) -> int:
+        """Write the decompressed programme to ``path`` as a CSV of samples.
+
+        The file has a header row and one row per sample with its index, time
+        in seconds and pressure value in the programme's units.
+
+        :returns: Number of samples written.
+        :raises RuntimeError: If no programme is loaded.
+        """
+        if self._programme is None:
+            raise RuntimeError("no programme to export")
+        samples = decompress(self._programme)
+        rate = self._programme.sampling_rate_hz
+        units = self._programme.pressure_units
+        index = np.arange(samples.size)
+        rows = np.column_stack((index, index / rate, samples))
+        with path.open("w", encoding="utf-8", newline="") as f:
+            f.write(f"index,time_s,pressure_{units}\n")
+            np.savetxt(f, rows, delimiter=",", fmt=("%d", "%.9g", "%.9g"))
+        return int(samples.size)
 
     def _emit_remove_enabled(self) -> None:
         can_remove = (

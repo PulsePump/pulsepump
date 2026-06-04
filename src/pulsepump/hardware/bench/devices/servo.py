@@ -5,7 +5,7 @@ from __future__ import annotations
 import math
 import time
 
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import Qt, QTimer
 
 from ..config import ServoConfig
 from ..signals import SignalDescriptor
@@ -25,6 +25,7 @@ class ServoDevice(BenchDevice[ServoConfig]):
     def __init__(self, config: ServoConfig, parent=None) -> None:
         super().__init__(config, parent)
         self._sweep_timer = QTimer(self)
+        self._sweep_timer.setTimerType(Qt.TimerType.PreciseTimer)
         self._sweep_timer.timeout.connect(self._on_sweep_tick)
         self._sweep_freq_hz: float = 1.0
         self._sweep_start_time: float = 0.0
@@ -33,11 +34,12 @@ class ServoDevice(BenchDevice[ServoConfig]):
     def sweeping(self) -> bool:
         return self._sweep_timer.isActive()
 
+    _SWEEP_RATE_HZ = 25  # command rate sent to firmware during sweep
+
     def start_sweep(self, freq_hz: float) -> None:
         self._sweep_freq_hz = max(freq_hz, 1e-3)
         self._sweep_start_time = time.monotonic()
-        interval_ms = max(1, int(1000.0 / self.sample_rate_hz))
-        self._sweep_timer.start(interval_ms)
+        self._sweep_timer.start(1000 // self._SWEEP_RATE_HZ)
 
     def stop_sweep(self) -> None:
         self._sweep_timer.stop()

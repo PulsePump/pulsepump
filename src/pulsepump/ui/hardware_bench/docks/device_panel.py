@@ -212,10 +212,39 @@ class DevicePanel(QDockWidget):
         slider.valueChanged.connect(spin.setValue)
         spin.valueChanged.connect(slider.setValue)
         slider.valueChanged.connect(lambda v, dev=servo: dev.set_angle(float(v)))
-        row = QHBoxLayout()
-        row.addWidget(slider, 1)
-        row.addWidget(spin)
-        form.addRow("Angle:", row)
+        angle_row = QHBoxLayout()
+        angle_row.addWidget(slider, 1)
+        angle_row.addWidget(spin)
+        form.addRow("Angle:", angle_row)
+
+        freq_spin = QDoubleSpinBox()
+        freq_spin.setRange(0.01, 20.0)
+        freq_spin.setSingleStep(0.1)
+        freq_spin.setDecimals(2)
+        freq_spin.setSuffix(" Hz")
+        freq_spin.setValue(1.0)
+
+        sweep_btn = QPushButton("Start Sweep")
+
+        def _toggle_sweep() -> None:
+            if servo.sweeping:
+                servo.stop_sweep()
+                sweep_btn.setText("Start Sweep")
+                slider.setEnabled(True)
+                spin.setEnabled(True)
+            else:
+                servo.start_sweep(freq_spin.value())
+                sweep_btn.setText("Stop Sweep")
+                slider.setEnabled(False)
+                spin.setEnabled(False)
+
+        sweep_btn.clicked.connect(_toggle_sweep)
+
+        sweep_row = QHBoxLayout()
+        sweep_row.addWidget(freq_spin, 1)
+        sweep_row.addWidget(sweep_btn)
+        form.addRow("Sine sweep:", sweep_row)
+
         return box
 
     def _stepper_controls(self) -> QGroupBox:

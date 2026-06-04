@@ -32,7 +32,7 @@ class PressureSensorDevice(BenchDevice[PressureSensorConfig]):
 
     def ingest(self, t_s: float, data: dict) -> dict[str, float]:
         raw = int(data.get("counts", 0))
-        voltage = raw * pressure._cfg._counts_to_v  # type: ignore[attr-defined]
+        voltage = pressure.counts_to_voltage(raw)
         pres = pressure.counts_to_pressure(raw)
         return {
             "counts": float(raw),

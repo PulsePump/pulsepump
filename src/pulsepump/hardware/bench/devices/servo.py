@@ -2,6 +2,11 @@
 
 from __future__ import annotations
 
+import math
+import time
+
+from PySide6.QtCore import QTimer
+
 from ..config import ServoConfig
 from ..signals import SignalDescriptor
 from .base import BenchDevice
@@ -16,6 +21,33 @@ class ServoDevice(BenchDevice[ServoConfig]):
     """
 
     device_type = "servo"
+
+    def __init__(self, config: ServoConfig, parent=None) -> None:
+        super().__init__(config, parent)
+        self._sweep_timer = QTimer(self)
+        self._sweep_timer.timeout.connect(self._on_sweep_tick)
+        self._sweep_freq_hz: float = 1.0
+        self._sweep_start_time: float = 0.0
+
+    @property
+    def sweeping(self) -> bool:
+        return self._sweep_timer.isActive()
+
+    def start_sweep(self, freq_hz: float) -> None:
+        self._sweep_freq_hz = max(freq_hz, 1e-3)
+        self._sweep_start_time = time.monotonic()
+        interval_ms = max(1, int(1000.0 / self.sample_rate_hz))
+        self._sweep_timer.start(interval_ms)
+
+    def stop_sweep(self) -> None:
+        self._sweep_timer.stop()
+
+    def _on_sweep_tick(self) -> None:
+        elapsed = time.monotonic() - self._sweep_start_time
+        angle = (self._config.max_angle_deg / 2.0) * (
+            1.0 + math.sin(2.0 * math.pi * self._sweep_freq_hz * elapsed)
+        )
+        self.set_angle(angle)
 
     def signals_for(self) -> list[SignalDescriptor]:
         return [

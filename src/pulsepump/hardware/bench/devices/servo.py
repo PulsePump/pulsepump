@@ -47,7 +47,9 @@ class ServoDevice(BenchDevice[ServoConfig]):
         angle = (self._config.max_angle_deg / 2.0) * (
             1.0 + math.sin(2.0 * math.pi * self._sweep_freq_hz * elapsed)
         )
-        self.set_angle(angle)
+        angle = max(0.0, min(self._config.max_angle_deg, angle))
+        self._send({"cmd": "set", "id": self.id, "field": "angle_deg", "value": angle})
+        self.input_changed.emit("commanded_angle_deg", angle)
 
     def signals_for(self) -> list[SignalDescriptor]:
         return [

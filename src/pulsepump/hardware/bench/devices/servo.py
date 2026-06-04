@@ -2,11 +2,6 @@
 
 from __future__ import annotations
 
-import math
-import time
-
-from PySide6.QtCore import Qt, QTimer
-
 from ..config import ServoConfig
 from ..signals import SignalDescriptor
 from .base import BenchDevice
@@ -24,34 +19,11 @@ class ServoDevice(BenchDevice[ServoConfig]):
 
     def __init__(self, config: ServoConfig, parent=None) -> None:
         super().__init__(config, parent)
-        self._sweep_timer = QTimer(self)
-        self._sweep_timer.setTimerType(Qt.TimerType.PreciseTimer)
-        self._sweep_timer.timeout.connect(self._on_sweep_tick)
-        self._sweep_freq_hz: float = 1.0
-        self._sweep_start_time: float = 0.0
+        self._sweeping = False
 
     @property
     def sweeping(self) -> bool:
-        return self._sweep_timer.isActive()
-
-    _SWEEP_RATE_HZ = 25  # command rate sent to firmware during sweep
-
-    def start_sweep(self, freq_hz: float) -> None:
-        self._sweep_freq_hz = max(freq_hz, 1e-3)
-        self._sweep_start_time = time.monotonic()
-        self._sweep_timer.start(1000 // self._SWEEP_RATE_HZ)
-
-    def stop_sweep(self) -> None:
-        self._sweep_timer.stop()
-
-    def _on_sweep_tick(self) -> None:
-        elapsed = time.monotonic() - self._sweep_start_time
-        angle = (self._config.max_angle_deg / 2.0) * (
-            1.0 + math.sin(2.0 * math.pi * self._sweep_freq_hz * elapsed)
-        )
-        angle = max(0.0, min(self._config.max_angle_deg, angle))
-        self._send({"cmd": "set", "id": self.id, "field": "angle_deg", "value": angle})
-        self.input_changed.emit("commanded_angle_deg", angle)
+        return self._sweeping
 
     def signals_for(self) -> list[SignalDescriptor]:
         return [
@@ -83,3 +55,11 @@ class ServoDevice(BenchDevice[ServoConfig]):
         self._send({"cmd": "set", "id": self.id, "field": "angle_deg", "value": deg})
         self.input_changed.emit("commanded_angle_deg", deg)
         self.status_message.emit(f"{self.id}: angle → {deg:.1f}°")
+
+    def start_sweep(self, freq_hz: float) -> None:
+        self._send({"cmd": "set", "id": self.id, "field": "sweep_freq_hz", "value": freq_hz})
+        self._sweeping = True
+
+    def stop_sweep(self) -> None:
+        self._send({"cmd": "set", "id": self.id, "field": "sweep_stop", "value": 1})
+        self._sweeping = False

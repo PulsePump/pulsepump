@@ -11,6 +11,7 @@ This file is uploaded to the Pico as ``:bench.py`` and run via ``mpremote run``.
 It is MicroPython-only — no host imports.
 """
 
+import math
 import sys
 import select
 import time
@@ -79,6 +80,10 @@ class ServoDevice:
         self.commanded_angle = 0.0
         self._duty = 0
         self._pulse_us = 0
+        self._sweep_active = False
+        self._sweep_freq_hz = 1.0
+        self._sweep_start_ms = 0
+        self._sweep_next_us = 0
         self._apply_angle(self.commanded_angle)
 
     def reconfigure(self, cfg):
@@ -108,10 +113,26 @@ class ServoDevice:
 
     def set_field(self, field, value):
         if field == "angle_deg":
+            self._sweep_active = False
             self._apply_angle(float(value))
+        elif field == "sweep_freq_hz":
+            self._sweep_freq_hz = max(0.001, float(value))
+            self._sweep_start_ms = time.ticks_ms()
+            self._sweep_next_us = time.ticks_us()
+            self._sweep_active = True
+        elif field == "sweep_stop":
+            self._sweep_active = False
 
     def advance_steps(self):
-        pass
+        if not self._sweep_active:
+            return
+        now = time.ticks_us()
+        if time.ticks_diff(now, self._sweep_next_us) < 0:
+            return
+        self._sweep_next_us = time.ticks_add(self._sweep_next_us, 1_000_000 // self.pwm_freq_hz)
+        elapsed_s = time.ticks_diff(time.ticks_ms(), self._sweep_start_ms) * 0.001
+        angle = (self.max_angle * 0.5) * (1.0 + math.sin(2.0 * math.pi * self._sweep_freq_hz * elapsed_s))
+        self._apply_angle(angle)
 
     def sample(self):
         return {
